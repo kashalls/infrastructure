@@ -1,0 +1,16 @@
+{
+  "trash_id": "banned-releases",
+  "name": "Banned Releases",
+  "includeCustomFormatWhenRenaming": false,
+  "specifications": [
+    {
+      "name": "sugoi",
+      "implementation": "ReleaseGroupSpecification",
+      "negate": false,
+      "required": false,
+      "fields": {
+        "value": "^(sugoi)$"
+      }
+    }
+  ]
+}
