@@ -11,5 +11,8 @@ configMapGenerator:
   - name: recyclarr-configmap
     files:
       - recyclarr.yml=./resources/recyclarr.yml
+      - settings.yml=./resources/settings.yml
+      - banned-releases-sonarr.json=./resources/banned-releases-sonarr.json
+      - banned-releases-radarr.json=./resources/banned-releases-radarr.json
 generatorOptions:
   disableNameSuffixHash: true

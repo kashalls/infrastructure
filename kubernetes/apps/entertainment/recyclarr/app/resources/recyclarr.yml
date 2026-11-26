@@ -86,6 +86,14 @@ sonarr:
         assign_scores_to:
           - name: "[Anime] Remux-1080p"
           - trash_id: c4cadd6b35b95f62c3d47a408e53e2f7 # WEB-2160p (Combined)
+      - # Banned
+        trash_ids:
+          - banned-releases
+        assign_scores_to:
+          - name: "[Anime] Remux-1080p"
+            score: -10000
+          - trash_id: c4cadd6b35b95f62c3d47a408e53e2f7 # WEB-2160p (Combined)
+            score: -10000
 
 radarr:
   movies:
@@ -192,3 +200,11 @@ radarr:
           - f537cf427b64c38c8e36298f657e4828 # Scene
         assign_scores_to:
           - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)
+      - # Banned
+        trash_ids:
+          - banned-releases
+        assign_scores_to:
+          - name: "[Anime] Remux-1080p"
+            score: -10000
+          - trash_id: 5128baeb2b081b72126bc8482b2a86a0 # [SQP] SQP-1 (2160p)
+            score: -10000
