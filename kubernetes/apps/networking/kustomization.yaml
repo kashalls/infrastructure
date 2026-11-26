@@ -13,3 +13,4 @@ resources:
   - ./envoy-gateway/ks.yaml
   - ./multus/ks.yaml
   - ./unifi-dns/ks.yaml
+  - ./unifi-mcp/ks.yaml

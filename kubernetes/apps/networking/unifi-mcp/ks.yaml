@@ -11,7 +11,7 @@ spec:
   dependsOn:
     - name: onepassword
       namespace: external-secrets
-  path: ./kubernetes/apps/default/unifi-mcp/app
+  path: ./kubernetes/apps/networking/unifi-mcp/app
   prune: true
   wait: false
   interval: 1h

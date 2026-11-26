@@ -32,7 +32,7 @@ spec:
             env:
               TZ: America/Los_Angeles
               UNIFI_HOST: 10.0.1.1
-              UNIFI_MCP_ALLOWED_HOSTS: localhost,127.0.0.1,unifi-mcp.ok8.sh,unifi-mcp.default.svc.cluster.local
+              UNIFI_MCP_ALLOWED_HOSTS: localhost,127.0.0.1,unifi-mcp.ok8.sh,unifi-mcp.networking.svc.cluster.local
               UNIFI_MCP_HOST: 0.0.0.0
               UNIFI_MCP_HTTP_ENABLED: true
               UNIFI_NETWORK_WEBSOCKET_ENABLED: false
