@@ -1,0 +1,98 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: atuin
+spec:
+  interval: 1h
+  chartRef:
+    kind: OCIRepository
+    name: atuin
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  values:
+    controllers:
+      atuin:
+        strategy: Recreate
+        containers:
+          app:
+            image:
+              repository: ghcr.io/atuinsh/atuin
+              tag: 18.25.1@sha256:8049083e74727566e314ca5de07f4d9db6f7baf357035b3adb23cbe23bcc2926
+            env:
+              ATUIN_HOST: "0.0.0.0"
+              ATUIN_PORT: &port 80
+              ATUIN_OPEN_REGISTRATION: "true"
+              ATUIN_DB_URI: sqlite:///config/atuin.db
+              ATUIN_METRICS__ENABLE: "true"
+              ATUIN_METRICS__HOST: "0.0.0.0"
+              TZ: America/Los_Angeles
+            args:
+              - start
+            probes:
+              liveness:
+                enabled: true
+                spec:
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: *port
+                  timeoutSeconds: 5
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 256Mi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+    service:
+      app:
+        ports:
+          http:
+            port: *port
+          metrics:
+            port: 9001
+    serviceMonitor:
+      app:
+        endpoints:
+          - port: metrics
+    route:
+      app:
+        annotations:
+          gatus.home-operations.com/endpoint: |-
+            url: https://{{ .Release.Name }}.ok8.sh/healthz
+        hostnames: ["{{ .Release.Name }}.ok8.sh"]
+        parentRefs:
+          - name: internal
+            namespace: networking
+            sectionName: https
+    persistence:
+      config:
+        existingClaim: atuin-zfs
