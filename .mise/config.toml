@@ -1,0 +1,36 @@
+min_version = "2026.11.3"
+monorepo_root = true
+
+[env]
+KUBECONFIG = "{{config_root}}/kubernetes/kubeconfig"
+MINIJINJA_CONFIG_FILE = "{{config_root}}/.minijinja.toml"
+SOPS_AGE_KEY_FILE = "{{config_root}}/age.key"
+TALOSCONFIG = "{{config_root}}/talos/talosconfig"
+
+[tasks.log]
+hide = true
+run = "gum log -t rfc3339 -s -l"
+
+[tasks."workstation:brew"]
+description = "Set up Homebrew tools"
+run = 'brew bundle --file "$MISE_PROJECT_ROOT/.mise/Brewfile"'
+
+[tasks."workstation:krew"]
+description = "Set up Krew plugins"
+depends = ["workstation:brew"]
+run = "kubectl krew install cert-manager cnpg browse-pvc rook-ceph view-secret moco"
+
+[tasks."workstation:helm"]
+description = "Set up Helm plugins"
+depends = ["workstation:brew"]
+run = "helm plugin install https://github.com/databus23/helm-diff"
+
+[task_config]
+cascade = true
+shell = "bash -euo pipefail -c"
+
+[monorepo]
+config_roots = ["bootstrap", "kubernetes", "talos"]
+
+[settings]
+task.quiet = true
