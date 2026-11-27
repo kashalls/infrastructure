@@ -95,4 +95,8 @@ spec:
             sectionName: https
     persistence:
       config:
-        existingClaim: atuin-zfs
+        forceRename: "{{ .Release.Name }}-zfs"
+        accessMode: ReadWriteOnce
+        size: 5Gi
+        storageClass: openebs-zfs-luddle
+        retain: true
