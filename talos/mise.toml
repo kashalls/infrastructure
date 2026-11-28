@@ -1,0 +1,101 @@
+[env]
+_.file = "talos.env"
+
+[tasks.apply-node]
+description = "Apply Talos config to a node"
+usage = '''
+arg "<node>" help="Node to apply the config to"
+flag "--mode <mode>" default="auto" help="Apply mode for talosctl apply-config"
+'''
+run = '''
+insecure=()
+talosctl -n "$usage_node" get machineconfig &>/dev/null || insecure=(--insecure)
+minijinja-cli machineconfig.yaml.j2 | op inject | talosctl -n "$usage_node" apply-config --mode "$usage_mode" "${insecure[@]}" -f /dev/stdin
+'''
+
+[tasks.apply-cluster]
+description = "Apply Talos config across the whole cluster"
+usage = 'flag "--mode <mode>" default="auto" help="Apply mode for talosctl apply-config"'
+run = '''
+for n in $(talosctl config info -o yaml | yq -r -e '.nodes[]'); do
+    mise run //talos:apply-node "$n" --mode "$usage_mode"
+done
+'''
+
+[tasks.upgrade-node]
+description = "Upgrade Talos on a node"
+usage = 'arg "<node>" help="Node to upgrade"'
+run = '''
+image="$(talosctl -n "$usage_node" get machineconfig v1alpha1 -o jsonpath='{.spec}' | yq -r '.machine.install.image | select(. != null)')"
+talosctl -n "$usage_node" upgrade --image="$image"
+'''
+
+[tasks.upgrade-cluster]
+description = "Upgrade Talos across the whole cluster"
+run = '''
+for n in $(talosctl config info -o yaml | yq -r -e '.nodes[]'); do
+    mise run //talos:upgrade-node "$n"
+done
+'''
+
+[tasks.upgrade-k8s]
+description = "Upgrade Kubernetes to the version in talos.env"
+confirm = { message = "Upgrade Kubernetes to {{ env.KUBERNETES_VERSION }}?", default = "no" }
+run = '''
+curl -fsSL -o /dev/null "https://github.com/siderolabs/kubelet/releases/tag/${KUBERNETES_VERSION}"
+controller="$(talosctl config info -o yaml | yq -r -e '.endpoints[0]')"
+talosctl -n "$controller" upgrade-k8s --to "$KUBERNETES_VERSION"
+talosctl health --wait-timeout=10m --server=false
+'''
+
+[tasks.reboot-node]
+description = "Reboot a node"
+usage = '''
+arg "<node>" help="Node to reboot"
+flag "--mode <mode>" default="default" help="Reboot mode for talosctl reboot"
+'''
+run = 'talosctl -n "$usage_node" reboot --mode "$usage_mode"'
+
+[tasks.reboot-cluster]
+description = "Reboot Talos across the whole cluster"
+usage = 'flag "--mode <mode>" default="default" help="Reboot mode for talosctl reboot"'
+run = '''
+for n in $(talosctl config info -o yaml | yq -r -e '.nodes[]'); do
+    mise run //talos:reboot-node "$n" --mode "$usage_mode"
+done
+'''
+
+[tasks.reset-node]
+description = "Reset Talos on a node"
+usage = 'arg "<node>" help="Node to reset"'
+confirm = { message = "Reset Talos node {{ usage.node }}?", default = "no" }
+run = 'talosctl reset -n "$usage_node" --graceful=false'
+
+[tasks.reset-cluster]
+description = "Reset Talos across the whole cluster"
+confirm = { message = "Reset Talos across the whole cluster?", default = "no" }
+run = '''
+nodes="$(talosctl config info -o yaml | yq -r -e '.nodes | join(",")')"
+talosctl reset -n "$nodes" --graceful=false
+'''
+
+[tasks.generate-kubeconfig]
+description = "Generate the kubeconfig for the cluster"
+run = '''
+controller="$(talosctl config info -o yaml | yq -r -e '.endpoints[0]')"
+talosctl kubeconfig -n "$controller" --force "$(dirname "$KUBECONFIG")"
+'''
+
+[tasks.generate-iso]
+description = "Download a Talos ISO for a version"
+usage = 'arg "<version>" help="Talos version"'
+run = '''
+schematic="$(mise run //talos:generate-schematic)"
+curl -fL -o "talos-${usage_version}.iso" "https://factory.talos.dev/image/${schematic}/${usage_version}/metal-amd64.iso"
+'''
+
+[tasks.generate-schematic]
+description = "Generate a Talos schematic ID"
+run = '''
+minijinja-cli schematic.yaml.j2 | curl -fsSX POST --data-binary @- https://factory.talos.dev/schematics | jq -er '.id'
+'''

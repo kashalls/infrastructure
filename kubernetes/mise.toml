@@ -1,0 +1,52 @@
+[tasks.browse-pvc]
+description = "Browse a PVC"
+interactive = true
+usage = '''
+arg "<claim>" help="Name of the PVC"
+flag "-n --namespace <ns>" default="default" help="Namespace of the PVC"
+'''
+run = 'kubectl browse-pvc -n "$usage_namespace" "$usage_claim"'
+
+[tasks.drain]
+description = "Drain a node"
+usage = 'arg "<node>" help="Node to drain"'
+run = 'kubectl drain "$usage_node" --ignore-daemonsets --delete-emptydir-data --force'
+
+[tasks.delete-failed-pods]
+description = "Delete pods in Evicted, Failed, or Succeeded state"
+run = '''
+for phase in Evicted Failed Succeeded; do
+    kubectl delete pods -A --field-selector status.phase="$phase" --ignore-not-found=true
+done
+'''
+
+[tasks.privileged]
+description = "Run a privileged pod on a node"
+interactive = true
+usage = 'arg "<node>" help="Node to run the pod on"'
+run = '''
+kubectl run "privileged-${usage_node}" -i --rm --image=null \
+    --overrides="$(yq -o=json templates/privileged-pod.yaml | NODE="$usage_node" envsubst)"
+'''
+
+[tasks.zfs]
+description = "Run a privileged pod with zfs and /var/mnt/puddle on a node"
+interactive = true
+usage = 'arg "<node>" help="Node to run the pod on"'
+run = '''
+kubectl run "zfs-${usage_node}" -i --rm --image=null \
+    --overrides="$(yq -o=json templates/zfs-pod.yaml | NODE="$usage_node" envsubst)"
+'''
+
+[tasks.reconcile]
+description = "Force Flux to pull in changes from the Git repository"
+run = "flux -n flux-system reconcile kustomization home-kubernetes --with-source"
+
+[tasks.hr-restart]
+description = "Restart all failed HelmReleases"
+run = '''
+kubectl get hr -A --no-headers | awk '$4 == "False" {print $1, $2}' | while read -r ns name; do
+    flux -n "$ns" suspend hr "$name"
+    flux -n "$ns" resume hr "$name"
+done
+'''
