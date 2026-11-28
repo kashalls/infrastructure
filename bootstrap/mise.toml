@@ -60,7 +60,7 @@ fi
 hide = true
 run = '''
 mise run //:log info "Running stage..." stage "$MISE_TASK_NAME"
-for n in $(talosctl config info -o yaml | yq -r -e '.nodes[]'); do
+for n in $(talosctl config info -o yaml | yq -r -e '.endpoints[]'); do
     until [[ "$(curl -ks -o /dev/null -w '%{http_code}' --connect-timeout 2 "https://${n}:6443/readyz")" == "200" ]]; do
         mise run //:log info "Waiting for kube-apiserver. Retrying in 5 seconds..." stage "$MISE_TASK_NAME" node "$n"
         sleep 5
