@@ -8,3 +8,6 @@ resource_providers:
     type: custom-formats
     path: /config/custom-formats/radarr
     service: radarr
+server:
+  logging:
+    files: false

@@ -8,10 +8,14 @@ resources:
   - ./helmrelease.yaml
   - ./pvc-zfs.yaml
 configMapGenerator:
-  - name: recyclarr-configmap
+  - name: recyclarr-configs
     files:
       - recyclarr.yml=./resources/recyclarr.yml
+  - name: recyclarr-settings
+    files:
       - settings.yml=./resources/settings.yml
+  - name: recyclarr-custom-formats
+    files:
       - banned-releases-sonarr.json=./resources/banned-releases-sonarr.json
       - banned-releases-radarr.json=./resources/banned-releases-radarr.json
 generatorOptions:
